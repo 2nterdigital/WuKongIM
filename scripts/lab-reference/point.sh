@@ -217,7 +217,8 @@ refuse_prior_state() {
     local docker_context="$1" wkcli="$2"
     local prior_containers prior_processes port
     prior_containers="$(docker --context "$docker_context" ps -q | wc -l | tr -d ' ')"
-    prior_processes="$(pgrep -u "$(id -u)" -f -- "bench reference run|/usr/local/bin/wukongim -config|integration-server-cli run node.lab" | wc -l | tr -d ' ')"
+    # pgrep exits 1 when nothing matches; under pipefail that must read as zero live processes, not as a failure.
+    prior_processes="$({ pgrep -u "$(id -u)" -f -- "bench reference run|/usr/local/bin/wukongim -config|integration-server-cli run node.lab" || true; } | wc -l | tr -d ' ')"
     [[ "$prior_containers" == 0 ]] || die "$prior_containers container(s) are live before launch; the previous product was not cleaned"
     [[ "$prior_processes" == 0 ]] || die "$prior_processes product process(es) are live before launch"
     for port in "${LAB_API_PORTS[@]}" "${LAB_TCP_PORTS[@]}"; do
@@ -357,9 +358,12 @@ USAGE
 }
 
 main() {
-    local task_root="" run_root="" source_dir="" wkcli="" image="" campaign_file="" source_file="" build_file="" host_file=""
-    local instrumentation="" docker_context="" deadline_seconds="" node_memory="8g" client_memory_max="4G"
-    local container_user="0:0" coordinator_cgroup="" allow_rootful=0
+    # Run state is global on purpose: the EXIT trap (finish) runs after main's
+    # frame is gone when errexit fires inside main, and it must still stop the
+    # collector, tear the Compose project down and write the receipt.
+    task_root="" run_root="" source_dir="" wkcli="" image="" campaign_file="" source_file="" build_file="" host_file=""
+    instrumentation="" docker_context="" deadline_seconds="" node_memory="8g" client_memory_max="4G"
+    container_user="0:0" coordinator_cgroup="" allow_rootful=0
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --task-root) task_root="$2"; shift 2 ;;
@@ -396,23 +400,22 @@ main() {
     below_task_root "$task_root" "$source_dir" || die "source dir must be below the task root"
     below_task_root "$task_root" "$wkcli" || die "wkcli must be below the task root"
     [[ -x "$wkcli" ]] || die "wkcli is not executable"
-    local compose_file="$source_dir/docker/lab/reference/compose.yml"
-    local conf_dir="$source_dir/docker/lab/reference/conf"
+    compose_file="$source_dir/docker/lab/reference/compose.yml"
+    conf_dir="$source_dir/docker/lab/reference/conf"
     [[ -f "$compose_file" ]] || die "laboratory Compose file is missing in the source dir"
     [[ -f "$campaign_file" && -f "$source_file" && -f "$build_file" && -f "$host_file" ]] || die "a fact file is missing"
     [[ "$instrumentation" == on || "$instrumentation" == off ]] || die "--instrumentation must be on or off"
 
-    local sequence rate seed run_id project
     sequence="$(json_field "$campaign_file" launch_sequence)"
     rate="$(json_field "$campaign_file" rate_per_second)"
     seed="$(json_field "$campaign_file" identity_seed)"
     run_id="$(printf 'ref-seq%02d' "$sequence")"
     project="$(printf 'wk-ref-seq%02d' "$sequence")"
 
-    local facts="$run_root/facts" evidence="$run_root/evidence" client_dir="$run_root/client"
-    local receipt="$run_root/point-receipt.json"
-    local phase="validate" client_exit="" cleanup_status="" collector_pid="" client_pid="" started_utc created_root=0 launched=0
-    local -a compose_vars=()
+    facts="$run_root/facts" evidence="$run_root/evidence" client_dir="$run_root/client"
+    receipt="$run_root/point-receipt.json"
+    phase="validate" client_exit="" cleanup_status="" collector_pid="" client_pid="" started_utc="" created_root=0 launched=0
+    compose_vars=()
     mapfile -t compose_vars < <(compose_env "$run_root" "$conf_dir" "$image" "$project" "$instrumentation" "$node_memory" "$container_user")
     (( ${#compose_vars[@]} == 17 )) || die "compose environment is incomplete"
     started_utc="$(utc_now)"

@@ -32,8 +32,11 @@ USAGE
 }
 
 restart_main() {
-    local task_root="" run_root="" source_dir="" wkcli="" image="" docker_context="" deadline_seconds=""
-    local node_memory="8g" container_user="0:0" allow_rootful=0
+    # Run state is global on purpose: the EXIT trap (finish) runs after this
+    # frame is gone when errexit fires here, and it must still tear the Compose
+    # project down and write the restart receipt.
+    task_root="" run_root="" source_dir="" wkcli="" image="" docker_context="" deadline_seconds=""
+    node_memory="8g" container_user="0:0" allow_rootful=0
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --task-root) task_root="$2"; shift 2 ;;
@@ -63,13 +66,13 @@ restart_main() {
     below_task_root "$task_root" "$source_dir" || die "source dir must be below the task root"
     below_task_root "$task_root" "$wkcli" || die "wkcli must be below the task root"
     [[ -x "$wkcli" ]] || die "wkcli is not executable"
-    local compose_file="$source_dir/docker/lab/reference/compose.yml"
-    local conf_dir="$source_dir/docker/lab/reference/conf"
+    compose_file="$source_dir/docker/lab/reference/compose.yml"
+    conf_dir="$source_dir/docker/lab/reference/conf"
     [[ -f "$compose_file" ]] || die "laboratory Compose file is missing in the source dir"
 
-    local facts="$run_root/facts" restart_dir="$run_root/restart"
-    local rfacts="$restart_dir/facts" revidence="$restart_dir/evidence"
-    local sequence project instrumentation
+    facts="$run_root/facts" restart_dir="$run_root/restart"
+    rfacts="$restart_dir/facts" revidence="$restart_dir/evidence"
+    sequence="" project="" instrumentation=""
     sequence="$(json_field "$facts/campaign.json" launch_sequence)"
     project="$(printf 'wk-ref-seq%02d' "$sequence")"
     if grep -q 'WK_METRICS_ENABLE: "true"' "$run_root/evidence/compose-config.yaml"; then
@@ -79,11 +82,11 @@ restart_main() {
     else
         die "the retained Compose configuration does not state the metrics switch"
     fi
-    local -a compose_vars=()
+    compose_vars=()
     mapfile -t compose_vars < <(compose_env "$run_root" "$conf_dir" "$image" "$project" "$instrumentation" "$node_memory" "$container_user")
     (( ${#compose_vars[@]} == 17 )) || die "compose environment is incomplete"
 
-    local phase="validate" cleanup_status="" reaudit_exit="" launched=0 created=0 started_utc
+    phase="validate" cleanup_status="" reaudit_exit="" launched=0 created=0 started_utc=""
     started_utc="$(utc_now)"
     finish() {
         local status=$?

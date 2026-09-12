@@ -176,3 +176,79 @@ func TestLabReferencePointRunnerGatesTheRenderedComposeConfiguration(t *testing.
 		}
 	}
 }
+
+// The pre-launch refusal only fires when something is live: with no container,
+// no product process and no bound laboratory port it must succeed, even though
+// pgrep exits non-zero when nothing matches (pipefail must not turn "nothing
+// is live" into a silent exit).
+func TestLabReferencePointRunnerRefusesPriorStateOnlyWhenSomethingIsLive(t *testing.T) {
+	path, _ := labReferencePointScript(t)
+	// Plain statements: inside a && list bash would suppress errexit and hide the defect.
+	quiet := exec.Command("bash", "-c", "source \"$1\"; docker() { :; }; pgrep() { return 1; }; ss() { :; }\nrefuse_prior_state ctx wkcli\necho CLEAN", "_", path)
+	output, err := quiet.CombinedOutput()
+	if err != nil || !strings.Contains(string(output), "CLEAN") {
+		t.Fatalf("a clean host passes the prior-state refusal: %v %s", err, output)
+	}
+	live := exec.Command("bash", "-c", `source "$1"; docker() { :; }; pgrep() { echo 4242; }; ss() { :; }; refuse_prior_state ctx wkcli`, "_", path)
+	output, err = live.CombinedOutput()
+	if err == nil || !strings.Contains(string(output), "product process(es) are live") {
+		t.Fatalf("a live product process is refused by name: %v %s", err, output)
+	}
+}
+
+// The EXIT trap runs after main's frame is gone when errexit fires inside
+// main, so every variable it reads must be global: a trap that trips over an
+// unbound local writes no receipt and skips the compose teardown.
+func TestLabReferencePointRunnerExitTrapUsesNoFunctionLocalState(t *testing.T) {
+	root := repoRoot(t)
+	for _, entry := range []struct{ file, main string }{
+		{"point.sh", "\nmain() {"},
+		{"restart.sh", "\nrestart_main() {"},
+	} {
+		script := readFile(t, filepath.Join(root, "scripts", "lab-reference", entry.file))
+		assertExitTrapReadsOnlyGlobals(t, entry.file, script, entry.main)
+	}
+}
+
+func assertExitTrapReadsOnlyGlobals(t *testing.T, file, script, mainMarker string) {
+	t.Helper()
+	start := strings.Index(script, "    finish() {")
+	if start < 0 {
+		t.Fatalf("%s: the runner installs its finish trap inside main", file)
+	}
+	end := strings.Index(script[start:], "    trap finish EXIT")
+	if end < 0 {
+		t.Fatalf("%s: the runner installs its finish trap inside main", file)
+	}
+	body := script[start : start+end]
+	mainStart := strings.Index(script, mainMarker)
+	if mainStart < 0 {
+		t.Fatalf("%s: main is missing", file)
+	}
+	mainBody := script[mainStart:]
+	seen := map[string]bool{}
+	for _, field := range strings.FieldsFunc(body, func(r rune) bool {
+		return !(r == '_' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '$' || r == '{' || r == '#')
+	}) {
+		name := strings.TrimLeft(field, "${#")
+		if !strings.HasPrefix(field, "$") || name == "" || name == "status" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		for _, line := range strings.Split(mainBody, "\n") {
+			trimmed := strings.TrimSpace(line)
+			if !strings.HasPrefix(trimmed, "local ") {
+				continue
+			}
+			for _, decl := range strings.Fields(strings.TrimPrefix(trimmed, "local ")) {
+				decl = strings.TrimPrefix(decl, "-a")
+				if decl == name || strings.HasPrefix(decl, name+"=") {
+					t.Fatalf("%s: the finish trap reads %q, which main declares local: %s", file, name, trimmed)
+				}
+			}
+		}
+	}
+	if len(seen) < 5 {
+		t.Fatalf("%s: the finish trap reads the run state, saw %v", file, seen)
+	}
+}
