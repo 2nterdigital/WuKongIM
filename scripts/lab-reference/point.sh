@@ -196,13 +196,19 @@ docker_containment() {
     exec_root="$(tr '\0' '\n' </proc/"$dockerd_pid"/cmdline | awk -F= '/^--exec-root=/{print $2}' | head -n1)"
     [[ -n "$exec_root" ]] || exec_root="$(tr '\0' '\n' </proc/"$dockerd_pid"/cmdline | awk '/^--exec-root$/{getline; print}' | head -n1)"
     socket_path="$(docker context inspect "$docker_context" --format '{{.Endpoints.docker.Host}}')"
+    # AF_UNIX paths are bound through short runtime symlinks (the task root
+    # alone exceeds the 104-byte socket path limit), so containment is judged
+    # on the resolved physical paths, never on the handle names.
+    local socket_file exec_real
+    socket_file="$(realpath -e "${socket_path#unix://}" 2>/dev/null || true)"
+    exec_real="$(realpath -e "$exec_root" 2>/dev/null || true)"
     below_task_root "$task_root" "$data_root" || die "docker data root escapes the task root: $data_root"
-    below_task_root "$task_root" "$exec_root" || die "docker exec root escapes the task root: ${exec_root:-unset}"
-    [[ "$socket_path" == unix://"$task_root"/* ]] || die "docker socket escapes the task root: $socket_path"
+    below_task_root "$task_root" "$exec_real" || die "docker exec root escapes the task root: ${exec_root:-unset} -> ${exec_real:-unresolved}"
+    below_task_root "$task_root" "$socket_file" || die "docker socket escapes the task root: $socket_path -> ${socket_file:-unresolved}"
     if [[ "$rootless" != true && "$allow_rootful" != 1 ]]; then
         die "the daemon is not rootless; pass --allow-authorized-rootful only for an owner-authorized contained daemon"
     fi
-    printf '%s\n%s\n%s\n%s\n%s\n' "$data_root" "$exec_root" "$socket_path" "$rootless" "$dockerd_pid"
+    printf '%s\n%s\n%s\n%s\n%s\n' "$data_root" "$exec_real" "$socket_file" "$rootless" "$dockerd_pid"
 }
 
 # refuse_prior_state <docker context> <wkcli>: no container, product process
