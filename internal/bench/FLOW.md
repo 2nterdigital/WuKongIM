@@ -44,6 +44,12 @@ native local baseline
   -> fresh product generations for fixed 250/500/750/1,000 SEND/s steps
   -> typed closure, process/storage/I/O evidence, and sealed attestation
   -> optional fresh ten-minute 1,000 SEND/s soak only after four clean steps
+
+wkcli bench reference run | emit (reference/, ech0/WuKongIM comparison)
+  -> fixed 273-connection, 17-pair, 256-byte Person plan, exact counts per phase
+  -> one SEND per connection, SENDACK/timeout/indeterminate classes, bounded drain
+  -> authenticated history read-back and a separate RECV/RECVACK ledger
+  -> optional bounded /metrics scrapes -> run result + provenance -> document
 ```
 
 ## Invariants and Failure Semantics
@@ -85,6 +91,9 @@ native local baseline
   counters, histograms, reason codes, and bounded samples without raw UIDs,
   Channel IDs, credentials, response bodies, or arbitrary error text.
 - Static/config, target, worker, hard-limit, cancellation, and internal failures retain distinct outcomes.
+- The reference runner keeps acknowledgment, history and online delivery as
+  separate ledgers, leaves unexposed physical-work fields unavailable, and
+  retains no UID, Channel ID, ClientMsgNo, payload, token, address or path.
 
 ## Read First
 

@@ -27,6 +27,13 @@ type StageObserver interface {
 	ObserveReplicationStage(stage string, result string, d time.Duration)
 }
 
+// StageCounter optionally receives every stage completion, unsampled, so a
+// bounded fixed-cardinality count exists beside the sampled latency
+// histogram. Implementations must remain non-blocking and identity-free.
+type StageCounter interface {
+	CountReplicationStage(stage string, result string)
+}
+
 type sampledStageObserver struct {
 	sink     StageObserver
 	every    uint64
@@ -37,18 +44,26 @@ func newSampledStageObserver(sink StageObserver, every uint64) StageObserver {
 	if sink == nil {
 		return nil
 	}
-	if every <= 1 {
-		return sink
+	if every < 1 {
+		every = 1
 	}
 	return &sampledStageObserver{sink: sink, every: every}
 }
 
+// ObserveReplicationStage counts every completion when the sink can count,
+// then forwards one latency sample per interval to the sink.
 func (o *sampledStageObserver) ObserveReplicationStage(stage string, result string, d time.Duration) {
 	if o == nil || o.sink == nil {
 		return
 	}
 	index := replicationStageIndex(stage)
-	if index < 0 || o.counters[index].Add(1)%o.every != 1 {
+	if index < 0 {
+		return
+	}
+	if counter, ok := o.sink.(StageCounter); ok {
+		counter.CountReplicationStage(stage, result)
+	}
+	if n := o.counters[index].Add(1); o.every > 1 && n%o.every != 1 {
 		return
 	}
 	o.sink.ObserveReplicationStage(stage, result, d)

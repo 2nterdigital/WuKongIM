@@ -1,0 +1,309 @@
+{
+  "schema": "wukongim-reference-provenance/1",
+  "campaign": {
+    "change": "establish-ech0-wukongim-reference-load-comparison",
+    "manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "launch_sequence": 6,
+    "point_kind": "common",
+    "ladder": "common",
+    "rate_per_second": 150,
+    "repeat_of": null,
+    "root": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/runs/wukongim-common-150-seq06"
+  },
+  "source": {
+    "repository": "2nterdigital/WuKongIM",
+    "remote_url": "git@github.com:2nterdigital/WuKongIM.git",
+    "git_ref": "ref/metric",
+    "commit": "4444444444444444444444444444444444444444",
+    "tree": "5555555555555555555555555555555555555555",
+    "parent": "47bc77ee34d6677a78dd6f8674e4293409e8f9a2",
+    "dirty": false,
+    "dependency_manifest": {
+      "name": "go.sum",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "planning_base": "47bc77ee34d6677a78dd6f8674e4293409e8f9a2",
+    "instrumentation": {
+      "base_commit": "47bc77ee34d6677a78dd6f8674e4293409e8f9a2",
+      "diff_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "changed_paths": [
+        "internal/bench/reference"
+      ]
+    }
+  },
+  "build": {
+    "host_toolchain": "go1.25.11 linux/amd64",
+    "profile": "docker build",
+    "features": [],
+    "binaries": [
+      {
+        "name": "wkcli",
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "size_bytes": 1
+      }
+    ],
+    "images": [
+      {
+        "name": "wukongim-lab:ref-metric",
+        "image_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "repo_digest": null,
+        "base_images": [
+          {
+            "name": "golang:1.26.7-bookworm",
+            "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "name": "alpine:3.24.1",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "build_args": {},
+        "buildkit_version": "v0.26.0",
+        "compiler_identity": "go1.26.7 linux/amd64 (image builder stage)"
+      }
+    ]
+  },
+  "host": {
+    "teleport_node": "ech0-message-lab3",
+    "hostname": "h",
+    "labels": {
+      "project": "tornado-message",
+      "purpose": "ech0-message-lab3"
+    },
+    "login": "ecs-user",
+    "logical_cpus": 16,
+    "memory_bytes": 68719476736,
+    "kernel": "k",
+    "os": "o",
+    "task_root": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison",
+    "backing_device": "/dev/nvme0n1p3",
+    "filesystem": "ext4",
+    "mount_options": "rw",
+    "free_bytes_at_launch": 1099511627776,
+    "clock_synchronized": true
+  },
+  "deployment": {
+    "role_quotas": {
+      "node-1": {
+        "cpus": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "cpu_quota_percent": 400,
+        "memory_max_bytes": 8589934592,
+        "cgroup": null
+      },
+      "node-2": {
+        "cpus": [
+          4,
+          5,
+          6,
+          7
+        ],
+        "cpu_quota_percent": 400,
+        "memory_max_bytes": 8589934592,
+        "cgroup": null
+      },
+      "node-3": {
+        "cpus": [
+          8,
+          9,
+          10,
+          11
+        ],
+        "cpu_quota_percent": 400,
+        "memory_max_bytes": 8589934592,
+        "cgroup": null
+      },
+      "client": {
+        "cpus": [
+          12,
+          13
+        ],
+        "cpu_quota_percent": 200,
+        "memory_max_bytes": 8589934592,
+        "cgroup": null
+      },
+      "coordinator": {
+        "cpus": [
+          14,
+          15
+        ],
+        "cpu_quota_percent": 200,
+        "memory_max_bytes": 8589934592,
+        "cgroup": null
+      }
+    },
+    "topology": {
+      "kind": "wukongim_slots",
+      "ech0": null,
+      "wukongim": {
+        "hash_slot_count": 256,
+        "initial_slot_count": 12,
+        "slot_replica_n": 3,
+        "channel_append_batch_max_records": 128,
+        "channel_append_batch_max_wait": "250us",
+        "commit_coordinator_flush_window": "1ms",
+        "commit_coordinator_max_requests": 0,
+        "commit_coordinator_max_records": 0,
+        "commit_coordinator_max_bytes": 131072,
+        "commit_coordinator_shards": 1
+      }
+    },
+    "configuration_sha256": {
+      "node-1": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "node-2": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "node-3": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    "docker": {
+      "engine_version": "29.8.0",
+      "compose_version": "v5.5.1",
+      "buildkit_version": null,
+      "rootless": true,
+      "data_root": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/docker/data",
+      "exec_root": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/docker/exec",
+      "socket": "unix:///srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/docker/run/docker.sock",
+      "containers": [
+        {
+          "name": "wk-ref-node1",
+          "image_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "cpuset": "0-3",
+          "cpu_quota_percent": 400,
+          "memory_limit_bytes": 8589934592,
+          "mounts": [
+            {
+              "source": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/runs/wukongim-common-150-seq06/node1/data",
+              "destination": "/var/lib/wukongim",
+              "kind": "bind"
+            }
+          ],
+          "log_path": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/docker/data/containers/1-json.log"
+        },
+        {
+          "name": "wk-ref-node2",
+          "image_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "cpuset": "4-7",
+          "cpu_quota_percent": 400,
+          "memory_limit_bytes": 8589934592,
+          "mounts": [
+            {
+              "source": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/runs/wukongim-common-150-seq06/node2/data",
+              "destination": "/var/lib/wukongim",
+              "kind": "bind"
+            }
+          ],
+          "log_path": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/docker/data/containers/2-json.log"
+        },
+        {
+          "name": "wk-ref-node3",
+          "image_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "cpuset": "8-11",
+          "cpu_quota_percent": 400,
+          "memory_limit_bytes": 8589934592,
+          "mounts": [
+            {
+              "source": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/runs/wukongim-common-150-seq06/node3/data",
+              "destination": "/var/lib/wukongim",
+              "kind": "bind"
+            }
+          ],
+          "log_path": "/srv/tornado-message-data/ecs-user/establish-ech0-wukongim-reference-load-comparison/docker/data/containers/3-json.log"
+        }
+      ],
+      "volumes": [],
+      "networks": [
+        "wk-ref-seq06_default"
+      ],
+      "daemon_overhead": {
+        "cpu_ms": 100,
+        "max_rss_bytes": 1048576
+      }
+    }
+  },
+  "isolation": {
+    "quiet_host": true,
+    "load1_at_launch": 0.0,
+    "foreign_processes_at_launch": [],
+    "foreign_compile_seen_during_run": false,
+    "clock_synchronized": true,
+    "prior_process_live": false,
+    "prior_containers_live": false,
+    "host_overlap": false
+  },
+  "resources": {
+    "sample_interval_ms": 1000,
+    "roles": {
+      "node-1": {
+        "cpu_ms": 1000,
+        "max_rss_bytes": 1048576,
+        "memory_peak_bytes": 1048576,
+        "read_bytes": 0,
+        "write_bytes": 1048576,
+        "samples": 200,
+        "throttled_ms": 0
+      },
+      "node-2": {
+        "cpu_ms": 1000,
+        "max_rss_bytes": 1048576,
+        "memory_peak_bytes": 1048576,
+        "read_bytes": 0,
+        "write_bytes": 1048576,
+        "samples": 200,
+        "throttled_ms": 0
+      },
+      "node-3": {
+        "cpu_ms": 1000,
+        "max_rss_bytes": 1048576,
+        "memory_peak_bytes": 1048576,
+        "read_bytes": 0,
+        "write_bytes": 1048576,
+        "samples": 200,
+        "throttled_ms": 0
+      },
+      "client": {
+        "cpu_ms": 500,
+        "max_rss_bytes": 1048576,
+        "memory_peak_bytes": 1048576,
+        "read_bytes": 0,
+        "write_bytes": 1048576,
+        "samples": 200,
+        "throttled_ms": 0
+      }
+    },
+    "disk": {
+      "consumed_max_bytes": 1073741824,
+      "free_at_start_bytes": 1099511627776,
+      "free_min_bytes": 549755813888
+    },
+    "network": {
+      "unavailable": "loopback traffic is not attributed per role"
+    },
+    "log_volume_bytes": 10,
+    "docker_daemon": {
+      "cpu_ms": 100,
+      "max_rss_bytes": 1048576
+    }
+  },
+  "restart": {
+    "unavailable": "not selected for this root"
+  },
+  "cleanup": {
+    "status": "clean",
+    "detail": null,
+    "residual": {
+      "processes": 0,
+      "containers": 0,
+      "ports": 0,
+      "cgroups": 0,
+      "networks": 0,
+      "mounts": 0,
+      "volumes": 0,
+      "open_files": 0
+    }
+  },
+  "identity_seed": "reference-comparison-seed-1",
+  "launched_at_utc": "2026-09-13T01:00:00Z",
+  "deadline_ms": 3600000
+}

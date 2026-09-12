@@ -28,6 +28,7 @@ func NewCommand(deps command.Deps) *cobra.Command {
 	cmd.SetOut(deps.Stdout)
 	cmd.SetErr(deps.Stderr)
 	cmd.AddCommand(newSendCommand(deps))
+	cmd.AddCommand(newReferenceCommand(deps))
 	return cmd
 }
 

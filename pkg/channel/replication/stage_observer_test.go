@@ -78,3 +78,44 @@ func TestReplicationStageIndexIncludesEveryRuntimeStage(t *testing.T) {
 		seen[index] = stage
 	}
 }
+
+type countingReplicationStageObserver struct {
+	recordingReplicationStageObserver
+	mu     sync.Mutex
+	counts map[string]uint64
+}
+
+func (o *countingReplicationStageObserver) CountReplicationStage(stage string, result string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if o.counts == nil {
+		o.counts = map[string]uint64{}
+	}
+	o.counts[stage+"/"+result]++
+}
+
+func TestSampledStageObserverCountsEveryStageBeforeSampling(t *testing.T) {
+	sink := &countingReplicationStageObserver{}
+	observer := newSampledStageObserver(sink, 3)
+	for index := 0; index < 7; index++ {
+		observer.ObserveReplicationStage(stagePeerForegroundExchange, "ok", time.Duration(index))
+	}
+	observer.ObserveReplicationStage("not-a-stage", "ok", time.Second)
+	if got := sink.counts[stagePeerForegroundExchange+"/ok"]; got != 7 {
+		t.Fatalf("count = %d, want every one of the 7 completions", got)
+	}
+	if _, ok := sink.counts["not-a-stage/ok"]; ok {
+		t.Fatalf("an unknown stage is never counted")
+	}
+	if events := sink.snapshot(); len(events) != 3 {
+		t.Fatalf("sampled events = %d, want the latency histogram to stay sampled", len(events))
+	}
+	unsampled := newSampledStageObserver(sink, 1)
+	unsampled.ObserveReplicationStage(stageQuorumLocalStore, "err", time.Millisecond)
+	if got := sink.counts[stageQuorumLocalStore+"/err"]; got != 1 {
+		t.Fatalf("an unsampled observer still counts: %d", got)
+	}
+	if !hasReplicationStage(sink.snapshot(), stageQuorumLocalStore, "err") {
+		t.Fatalf("an unsampled observer forwards every observation")
+	}
+}

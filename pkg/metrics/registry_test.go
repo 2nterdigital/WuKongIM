@@ -2518,3 +2518,18 @@ func hasMetricByLabels(family *dto.MetricFamily, want map[string]string) bool {
 	}
 	return false
 }
+
+func TestReplicationStageCounterIsUnsampledBoundedAndPromoted(t *testing.T) {
+	reg := New(8, "node-8")
+	reg.ChannelRuntime.CountReplicationStage("peer_foreground_exchange", "ok")
+	reg.ChannelRuntime.CountReplicationStage("peer_foreground_exchange", "ok")
+	reg.ChannelRuntime.CountReplicationStage("quorum_local_store", "err")
+	recorder := httptest.NewRecorder()
+	reg.Handler().ServeHTTP(recorder, httptest.NewRequest("GET", "/metrics", nil))
+	require.Equal(t, 200, recorder.Code)
+	scrape := recorder.Body.String()
+	require.Contains(t, scrape, `wukongim_channelv2_replication_stage_total{node_id="8",node_name="node-8",result="ok",stage="peer_foreground_exchange"} 2`)
+	require.Contains(t, scrape, `wukongim_channelv2_replication_stage_total{node_id="8",node_name="node-8",result="err",stage="quorum_local_store"} 1`)
+	require.Contains(t, scrape, `wukongim_channel_replication_stage_total{node_id="8",node_name="node-8",result="ok",stage="peer_foreground_exchange"} 2`)
+	require.Equal(t, 2, strings.Count(scrape, "wukongim_channelv2_replication_stage_total{"))
+}

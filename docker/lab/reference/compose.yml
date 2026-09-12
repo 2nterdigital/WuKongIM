@@ -1,0 +1,79 @@
+# Laboratory Compose definition for the ech0/WuKongIM reference comparison
+# (change establish-ech0-wukongim-reference-load-comparison).
+#
+# Used on its own (`docker compose -p <project> -f docker/lab/reference/compose.yml`),
+# never merged over the development file: exactly three product nodes, no
+# simulator, no Prometheus or Grafana, no named or anonymous volume. Every
+# storage path, port, CPU set and switch is an interpolated variable without
+# a default, so `docker compose config` fails unless the launcher names an
+# explicit laboratory root below the authorized task root.
+name: ${WK_LAB_PROJECT:?WK_LAB_PROJECT is required}
+
+services:
+  wk-node1:
+    image: ${WK_LAB_IMAGE:?WK_LAB_IMAGE is required}
+    pull_policy: never
+    # Rootless daemon: 0:0 inside the container is the daemon's own user, so
+    # bind-mounted roots stay owned by that user. The launcher states it.
+    user: "${WK_LAB_CONTAINER_USER:?WK_LAB_CONTAINER_USER is required}"
+    restart: "no"
+    stop_signal: SIGTERM
+    stop_grace_period: ${WK_LAB_STOP_GRACE:?WK_LAB_STOP_GRACE is required}
+    cpuset: "${WK_LAB_NODE1_CPUSET:?WK_LAB_NODE1_CPUSET is required}"
+    mem_limit: ${WK_LAB_NODE_MEMORY:?WK_LAB_NODE_MEMORY is required}
+    environment:
+      WK_METRICS_ENABLE: "${WK_LAB_METRICS_ENABLE:?WK_LAB_METRICS_ENABLE is required}"
+      WK_EXTERNAL_TCPADDR: "127.0.0.1:${WK_LAB_NODE1_TCP_PORT:?WK_LAB_NODE1_TCP_PORT is required}"
+    volumes:
+      - ${WK_LAB_CONF_DIR:?WK_LAB_CONF_DIR is required}/node1.toml:/etc/wukongim/wukongim.toml:ro
+      - ${WK_LAB_ROOT:?WK_LAB_ROOT is required}/node1/data:/var/lib/wukongim
+      - ${WK_LAB_ROOT:?WK_LAB_ROOT is required}/node1/logs:/var/log/wukongim
+    tmpfs:
+      - /run/wukongim:size=16m
+    ports:
+      - "127.0.0.1:${WK_LAB_NODE1_API_PORT:?WK_LAB_NODE1_API_PORT is required}:5001"
+      - "127.0.0.1:${WK_LAB_NODE1_TCP_PORT:?WK_LAB_NODE1_TCP_PORT is required}:5100"
+
+  wk-node2:
+    image: ${WK_LAB_IMAGE:?WK_LAB_IMAGE is required}
+    pull_policy: never
+    user: "${WK_LAB_CONTAINER_USER:?WK_LAB_CONTAINER_USER is required}"
+    restart: "no"
+    stop_signal: SIGTERM
+    stop_grace_period: ${WK_LAB_STOP_GRACE:?WK_LAB_STOP_GRACE is required}
+    cpuset: "${WK_LAB_NODE2_CPUSET:?WK_LAB_NODE2_CPUSET is required}"
+    mem_limit: ${WK_LAB_NODE_MEMORY:?WK_LAB_NODE_MEMORY is required}
+    environment:
+      WK_METRICS_ENABLE: "${WK_LAB_METRICS_ENABLE:?WK_LAB_METRICS_ENABLE is required}"
+      WK_EXTERNAL_TCPADDR: "127.0.0.1:${WK_LAB_NODE2_TCP_PORT:?WK_LAB_NODE2_TCP_PORT is required}"
+    volumes:
+      - ${WK_LAB_CONF_DIR:?WK_LAB_CONF_DIR is required}/node2.toml:/etc/wukongim/wukongim.toml:ro
+      - ${WK_LAB_ROOT:?WK_LAB_ROOT is required}/node2/data:/var/lib/wukongim
+      - ${WK_LAB_ROOT:?WK_LAB_ROOT is required}/node2/logs:/var/log/wukongim
+    tmpfs:
+      - /run/wukongim:size=16m
+    ports:
+      - "127.0.0.1:${WK_LAB_NODE2_API_PORT:?WK_LAB_NODE2_API_PORT is required}:5001"
+      - "127.0.0.1:${WK_LAB_NODE2_TCP_PORT:?WK_LAB_NODE2_TCP_PORT is required}:5100"
+
+  wk-node3:
+    image: ${WK_LAB_IMAGE:?WK_LAB_IMAGE is required}
+    pull_policy: never
+    user: "${WK_LAB_CONTAINER_USER:?WK_LAB_CONTAINER_USER is required}"
+    restart: "no"
+    stop_signal: SIGTERM
+    stop_grace_period: ${WK_LAB_STOP_GRACE:?WK_LAB_STOP_GRACE is required}
+    cpuset: "${WK_LAB_NODE3_CPUSET:?WK_LAB_NODE3_CPUSET is required}"
+    mem_limit: ${WK_LAB_NODE_MEMORY:?WK_LAB_NODE_MEMORY is required}
+    environment:
+      WK_METRICS_ENABLE: "${WK_LAB_METRICS_ENABLE:?WK_LAB_METRICS_ENABLE is required}"
+      WK_EXTERNAL_TCPADDR: "127.0.0.1:${WK_LAB_NODE3_TCP_PORT:?WK_LAB_NODE3_TCP_PORT is required}"
+    volumes:
+      - ${WK_LAB_CONF_DIR:?WK_LAB_CONF_DIR is required}/node3.toml:/etc/wukongim/wukongim.toml:ro
+      - ${WK_LAB_ROOT:?WK_LAB_ROOT is required}/node3/data:/var/lib/wukongim
+      - ${WK_LAB_ROOT:?WK_LAB_ROOT is required}/node3/logs:/var/log/wukongim
+    tmpfs:
+      - /run/wukongim:size=16m
+    ports:
+      - "127.0.0.1:${WK_LAB_NODE3_API_PORT:?WK_LAB_NODE3_API_PORT is required}:5001"
+      - "127.0.0.1:${WK_LAB_NODE3_TCP_PORT:?WK_LAB_NODE3_TCP_PORT is required}:5100"

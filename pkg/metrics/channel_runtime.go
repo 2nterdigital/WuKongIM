@@ -56,6 +56,7 @@ type ChannelRuntimeMetrics struct {
 	appendStageDuration      *prometheus.HistogramVec
 	appendWaitStageDuration  *prometheus.HistogramVec
 	replicationStageDuration *prometheus.HistogramVec
+	replicationStageTotal    *prometheus.CounterVec
 	workerTaskDuration       *prometheus.HistogramVec
 	workerTaskErrorTotal     *prometheus.CounterVec
 	workerAdmissionTotal     *prometheus.CounterVec
@@ -259,6 +260,11 @@ func newChannelRuntimeMetrics(registry prometheus.Registerer, labels prometheus.
 			ConstLabels: labels,
 			Buckets:     channelRuntimeDurationBuckets,
 		}, []string{"stage", "result"}),
+		replicationStageTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:        "wukongim_channelv2_replication_stage_total",
+			Help:        "Channel runtime replication stage completions by stage and result, counted without sampling.",
+			ConstLabels: labels,
+		}, []string{"stage", "result"}),
 		workerTaskDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:        "wukongim_channelv2_worker_task_duration_seconds",
 			Help:        "Channel runtime worker task latency in seconds.",
@@ -339,6 +345,7 @@ func newChannelRuntimeMetrics(registry prometheus.Registerer, labels prometheus.
 		m.appendStageDuration,
 		m.appendWaitStageDuration,
 		m.replicationStageDuration,
+		m.replicationStageTotal,
 		m.workerTaskDuration,
 		m.workerTaskErrorTotal,
 		m.workerAdmissionTotal,
@@ -632,6 +639,16 @@ func (m *ChannelRuntimeMetrics) ObserveReplicationStage(stage string, result str
 		return
 	}
 	m.replicationStageDuration.WithLabelValues(stage, result).Observe(d.Seconds())
+}
+
+// CountReplicationStage counts one replication stage completion. It is the
+// unsampled companion of ObserveReplicationStage: fixed stage and result
+// labels, no proposal or Channel identity.
+func (m *ChannelRuntimeMetrics) CountReplicationStage(stage string, result string) {
+	if m == nil {
+		return
+	}
+	m.replicationStageTotal.WithLabelValues(stage, result).Inc()
 }
 
 func (m *ChannelRuntimeMetrics) ObserveWorkerResult(kind string, result string, d time.Duration, errorClass ...string) {

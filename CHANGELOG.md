@@ -6,6 +6,10 @@ move those entries into a version section named for that exact tag.
 
 ## [Unreleased]
 
+### 🚀 New Features / 新功能
+
+- Add `wkcli bench reference run|emit` with the bounded `internal/bench/reference` runner, the laboratory Compose definition under `docker/lab/reference` and the `scripts/lab-reference` point runner for the ech0/WuKongIM reference comparison; the opt-in metrics gain an unsampled `wukongim_channelv2_replication_stage_total` counter. / 新增 `wkcli bench reference run|emit`、有界的 `internal/bench/reference` 运行器、`docker/lab/reference` 实验室 Compose 定义与 `scripts/lab-reference` 单点运行脚本，用于 ech0/WuKongIM 参照对比；可选指标新增不采样的 `wukongim_channelv2_replication_stage_total` 计数器。
+
 ## [v3.0.0-beta.14] - 2026-09-12
 
 ### 🚀 New Features / 新功能
