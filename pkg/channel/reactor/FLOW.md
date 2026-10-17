@@ -58,8 +58,9 @@ typed bounded workers and returns as `EventWorkerResult`.
   compatibility pull falls back to the durable store on a cache miss.
 - One loaded runtime has one lifecycle controller. Hot follower replication
   remains separate but exposes pending-work evidence to lifecycle guards.
-- Cold activation is not loaded state and does not consume `MaxChannels` until
-  metadata and store loading both succeed.
+- Cold-activation, loading, and pending-meta shells hold one `MaxChannels`
+  capacity lease from admission until failure, stale authority, or a bounded
+  deadline releases it; only a loaded runtime is loaded state or probe-visible.
 - A hint is never authority proof. Newer hints coalesce behind one fixed lease;
   only authoritative, active, structurally valid local-replica metadata applies.
 - Mailbox turns, append batches, caches, pending work, workers, checkpoints,
@@ -80,7 +81,6 @@ typed bounded workers and returns as `EventWorkerResult`.
   plus latest anchor at captured HW, without promoting local copying into acceptance.
   Planning pins stable write fences and recovered leader/route/data-plane authority; appends remain fenced.
   Retained Will queries also capture HW and reject partial proof, foreign tasks and changed authority/fences.
-
 - Anchor and retirement controls share the ordinary append queue, slice ownership, byte bounds
   and cancellation guards. Flush rechecks recovered authority; typed durable
   completion advances monotonic progress after observer cancellation. It returns
